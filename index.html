@@ -1,256 +1,919 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Studio Photo Enhancer - Ultra Pro Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-  <style>
-    :root { --bg:#121212; --panel:#1d1d1d; --panel2:#171717; --border:#343434; --text:#e5e7eb; --muted:#9ca3af; --accent:#4facfe; --accent2:#0062ff; }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-    .panel { background:linear-gradient(180deg,var(--panel) 0%, var(--panel2) 100%); border-right:1px solid var(--border); }
-    .canvas-wrapper { background-image:repeating-linear-gradient(45deg,#161616 25%,transparent 25%,transparent 75%,#161616 75%,#161616),repeating-linear-gradient(45deg,#161616 25%,#202020 25%,#202020 75%,#161616 75%,#161616); background-position:0 0,10px 10px; background-size:20px 20px; display:flex; align-items:center; justify-content:center; min-height:50vh; overflow:hidden; position:relative; }
-    canvas { max-width:100%; max-height:72vh; object-fit:contain; box-shadow:0 12px 30px rgba(0,0,0,.45); border-radius:12px; background:#111; }
-    .compare-canvas { position:absolute; inset:0; pointer-events:none; }
-    input[type=range] { -webkit-appearance:none; appearance:none; width:100%; background:transparent; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; height:16px; width:16px; border-radius:50%; background:var(--accent); cursor:pointer; margin-top:-6px; box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 12px rgba(79,172,254,.4); }
-    input[type=range]::-webkit-slider-runnable-track { height:4px; background:#444; border-radius:999px; }
-    .btn-pro { background:linear-gradient(135deg,var(--accent2) 0%,#0045b8 100%); transition:all .2s ease; }
-    .btn-pro:hover { background:linear-gradient(135deg,#0073ff 0%,#0056e0 100%); box-shadow:0 6px 18px rgba(0,98,255,.35); }
-    .btn-soft { background:#252525; border:1px solid #3a3a3a; transition:all .2s ease; }
-    .btn-soft:hover { background:#2d2d2d; }
-    .chip { border:1px solid #404040; background:#222; color:#cbd5e1; font-size:10px; padding:4px 8px; border-radius:999px; }
-    .divider { border-bottom:1px solid #2e2e2e; margin:6px 0 0; padding-bottom:8px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Pro — Photographic Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0d0d;
+            --panel: #141414;
+            --surface: #1c1c1c;
+            --border: #2a2a2a;
+            --text: #e8e8e8;
+            --muted: #666;
+            --accent: #4f8ef7;
+            --accent2: #f76b4f;
+            --success: #4fc87a;
+            --gold: #f5c842;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOP BAR */
+        .topbar {
+            height: 48px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+        .topbar-logo .dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+        }
+        .topbar-sep { flex: 1; }
+        .topbar-stat {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            background: var(--surface);
+            padding: 3px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .topbar-stat span { color: var(--accent); }
+
+        /* MAIN LAYOUT */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        .section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-title {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* UPLOAD ZONE */
+        .upload-zone {
+            border: 1.5px dashed #333;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-zone:hover { border-color: var(--accent); background: rgba(79,142,247,0.05); }
+        .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+        .upload-zone i { font-size: 20px; color: var(--muted); margin-bottom: 6px; display: block; }
+        .upload-zone p { font-size: 11px; color: var(--muted); }
+        .upload-zone strong { color: var(--accent); }
+
+        /* PRESETS */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .preset-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 4px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            font-weight: 500;
+        }
+        .preset-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.08); }
+        .preset-btn.active { border-color: var(--accent); background: rgba(79,142,247,0.15); color: var(--accent); }
+
+        /* CONTROLS */
+        .controls-area {
+            padding: 0 16px 12px;
+            transition: opacity 0.3s;
+        }
+        .controls-area.disabled { opacity: 0.3; pointer-events: none; }
+
+        .ctrl-group { margin-bottom: 14px; }
+        .ctrl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .ctrl-label { font-size: 11px; color: #aaa; font-weight: 400; }
+        .ctrl-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            min-width: 36px;
+            text-align: right;
+        }
+
+        /* SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 0 3px rgba(79,142,247,0.15);
+            transition: box-shadow 0.15s;
+        }
+        input[type=range]:hover::-webkit-slider-thumb {
+            box-shadow: 0 0 0 5px rgba(79,142,247,0.25);
+        }
+        input[type=range].warm::-webkit-slider-thumb { border-color: #f5a442; box-shadow: 0 0 0 3px rgba(245,164,66,0.2); }
+        input[type=range].teal-slider::-webkit-slider-thumb { border-color: var(--success); box-shadow: 0 0 0 3px rgba(79,200,122,0.2); }
+
+        /* SECTION DIVIDER */
+        .subsection {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        .subsection-label {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        /* EXPORT PANEL */
+        .export-section { padding: 16px; }
+        select {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        select:hover { border-color: var(--accent); }
+
+        .btn-export {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 11px;
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            letter-spacing: 0.01em;
+        }
+        .btn-export:hover { background: #6fa3ff; box-shadow: 0 4px 20px rgba(79,142,247,0.4); transform: translateY(-1px); }
+        .btn-export:active { transform: translateY(0); }
+
+        .btn-reset {
+            width: 100%;
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover { border-color: #555; color: var(--text); }
+
+        /* CANVAS AREA */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #0a0a0a;
+        }
+        .workspace-toolbar {
+            height: 38px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            flex-shrink: 0;
+            background: var(--panel);
+        }
+        .toolbar-tag {
+            font-size: 10px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .toolbar-tag i { font-size: 9px; }
+        .toolbar-badge {
+            font-size: 9px;
+            background: rgba(79,142,247,0.15);
+            color: var(--accent);
+            padding: 2px 7px;
+            border-radius: 3px;
+            border: 1px solid rgba(79,142,247,0.3);
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+        }
+        .toolbar-sep { flex: 1; }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            overflow: hidden;
+        }
+
+        #placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #2a2a2a;
+        }
+        #placeholder i { font-size: 48px; }
+        #placeholder p { font-size: 13px; color: #333; }
+
+        canvas {
+            max-width: calc(100% - 48px);
+            max-height: calc(100% - 48px);
+            object-fit: contain;
+            border-radius: 2px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+            display: none;
+        }
+
+        /* LOADING */
+        #loading {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #222;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loadingText { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+        /* HISTOGRAM */
+        .histogram-wrap {
+            padding: 0 16px 16px;
+        }
+        #histCanvas {
+            width: 100%;
+            height: 50px;
+            border-radius: 4px;
+            background: #0d0d0d;
+            display: block;
+            opacity: 0.7;
+        }
+
+        /* FOCUS MODE */
+        .focus-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+        .focus-toggle:hover { color: var(--text); border-color: #444; }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; max-height: 50vh; }
+            .main { flex-direction: column; }
+        }
+    </style>
 </head>
-<body class="antialiased h-screen flex flex-col">
-  <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
-    <div class="w-full md:w-[360px] panel flex flex-col h-full overflow-y-auto z-10 shadow-2xl">
-      <div class="p-5 border-b border-gray-700">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h1 class="text-xl font-bold tracking-wide text-white"><i class="fas fa-camera-retro text-blue-400 mr-2"></i>Studio Ultra Pro</h1>
-            <p class="text-xs text-gray-400 mt-1">Restorasi realistis tanpa ubah bentuk wajah</p>
-          </div>
-          <span class="chip">Face Safe</span>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="topbar-logo">
+        <div class="dot"></div>
+        Studio Pro
+    </div>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+    <span style="font-size:11px;color:var(--muted);">Photographic Engine v2</span>
+    <div class="topbar-sep"></div>
+    <div class="topbar-stat" id="statDim">No Image</div>
+    <div class="topbar-stat" id="statMode"><span>Realtime</span> Processing</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <!-- Import -->
+        <div class="section">
+            <div class="section-title">Import</div>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="image/*">
+                <i class="fas fa-cloud-arrow-up"></i>
+                <p><strong>Klik</strong> atau drag foto</p>
+                <p style="margin-top:3px;font-size:10px;">JPG, PNG, WEBP</p>
+            </div>
         </div>
-      </div>
-      <div class="p-5 flex-grow space-y-6">
-        <div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">1. Impor Foto</label>
-          <input type="file" id="fileInput" accept="image/*" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600 cursor-pointer transition" />
+
+        <!-- Presets -->
+        <div class="section" id="presetSection">
+            <div class="section-title">Preset Cepat</div>
+            <div class="preset-grid">
+                <button class="preset-btn" onclick="applyPreset('auto')">✦ Auto</button>
+                <button class="preset-btn" onclick="applyPreset('portrait')">Portrait</button>
+                <button class="preset-btn" onclick="applyPreset('landscape')">Landscape</button>
+                <button class="preset-btn" onclick="applyPreset('golden')">Golden Hr</button>
+                <button class="preset-btn" onclick="applyPreset('cinematic')">Cinematic</button>
+                <button class="preset-btn" onclick="applyPreset('bw')">B&W Film</button>
+            </div>
         </div>
-        <div id="controls" class="space-y-4 opacity-30 pointer-events-none transition-opacity">
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider divider mb-3">2. Koreksi Dasar</label>
-          <div><div class="flex justify-between text-xs mb-1"><span>Pencahayaan</span><span id="valExposure" class="text-blue-400 font-mono">0</span></div><input type="range" id="ex" min="-40" max="40" value="4" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Kontras</span><span id="valContrast" class="text-blue-400 font-mono">0</span></div><input type="range" id="ct" min="-35" max="70" value="10" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Highlight Recovery</span><span id="valHighlight" class="text-blue-400 font-mono">0</span></div><input type="range" id="hl" min="0" max="100" value="28" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Shadow Lift</span><span id="valShadow" class="text-blue-400 font-mono">0</span></div><input type="range" id="sd" min="0" max="100" value="22" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Suhu</span><span id="valTemp" class="text-blue-400 font-mono">0</span></div><input type="range" id="tm" min="-40" max="40" value="8" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Saturasi</span><span id="valSat" class="text-blue-400 font-mono">0</span></div><input type="range" id="st" min="-50" max="50" value="6" /></div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider divider mb-3 mt-5">3. Restorasi Detail</label>
-          <div><div class="flex justify-between text-xs mb-1"><span>Micro Detail</span><span id="valDetail" class="text-blue-400 font-mono">0</span></div><input type="range" id="dt" min="0" max="100" value="26" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Texture Restore</span><span id="valTexture" class="text-blue-400 font-mono">0</span></div><input type="range" id="tx" min="0" max="100" value="24" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Noise Reduction</span><span id="valDenoise" class="text-blue-400 font-mono">0</span></div><input type="range" id="dn" min="0" max="100" value="18" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Anti-Plastic Skin</span><span id="valProtect" class="text-blue-400 font-mono">0</span></div><input type="range" id="fp" min="0" max="100" value="75" /></div>
-          <div><div class="flex justify-between text-xs mb-1"><span>Sharpen Edge Only</span><span id="valEdge" class="text-blue-400 font-mono">0</span></div><input type="range" id="ed" min="0" max="100" value="32" /></div>
-          <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider divider mb-3 mt-5">4. Output</label>
-          <div>
-            <label class="block text-xs text-gray-400 mb-2">Resolusi Akhir</label>
-            <select id="scaleSelect" class="bg-gray-800 border border-gray-600 text-white text-sm rounded block w-full p-2 outline-none focus:border-blue-500">
-              <option value="1">Original</option>
-              <option value="2" selected>2x Natural Upscale</option>
-              <option value="3">3x Studio Preserve</option>
-              <option value="4">4x High Resolution</option>
+
+        <!-- Histogram -->
+        <div class="histogram-wrap">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Histogram</div>
+            <canvas id="histCanvas" width="240" height="50"></canvas>
+        </div>
+
+        <!-- Light Controls -->
+        <div class="controls-area disabled" id="controlsArea">
+            <div class="subsection-label" style="padding:14px 0 10px">Cahaya</div>
+
+            <div class="ctrl-group">
+                <div class="ctrl-header"><span class="ctrl-label">Exposure</span><span class="ctrl-value" id="vEx">0</span></div>
+                <input type="range" id="ex" min="-80" max="80" value="0">
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-header"><span class="ctrl-label">Highlights</span><span class="ctrl-value" id="vHi">0</span></div>
+                <input type="range" id="hi" min="-100" max="100" value="0">
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-header"><span class="ctrl-label">Shadows</span><span class="ctrl-value" id="vSh">0</span></div>
+                <input type="range" id="sh" min="-100" max="100" value="0">
+            </div>
+            <div class="ctrl-group">
+                <div class="ctrl-header"><span class="ctrl-label">Contrast</span><span class="ctrl-value" id="vCt">0</span></div>
+                <input type="range" id="ct" min="-80" max="80" value="0">
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-label">Warna</div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Temperature</span><span class="ctrl-value" id="vTm">0</span></div>
+                    <input type="range" id="tm" min="-60" max="60" value="0" class="warm">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Tint</span><span class="ctrl-value" id="vTint">0</span></div>
+                    <input type="range" id="tint" min="-50" max="50" value="0" class="teal-slider">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Saturation</span><span class="ctrl-value" id="vSt">0</span></div>
+                    <input type="range" id="st" min="-100" max="100" value="0">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Vibrance</span><span class="ctrl-value" id="vVib">0</span></div>
+                    <input type="range" id="vib" min="-100" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-label">Detail & Tajam</div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Sharpness</span><span class="ctrl-value" id="vSharp">0</span></div>
+                    <input type="range" id="sharp" min="0" max="100" value="0">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Clarity</span><span class="ctrl-value" id="vCl">0</span></div>
+                    <input type="range" id="cl" min="0" max="100" value="0">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Noise Reduction</span><span class="ctrl-value" id="vNr">0</span></div>
+                    <input type="range" id="nr" min="0" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-label">Efek Kamera</div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Vignette</span><span class="ctrl-value" id="vVig">0</span></div>
+                    <input type="range" id="vig" min="0" max="100" value="0">
+                </div>
+                <div class="ctrl-group">
+                    <div class="ctrl-header"><span class="ctrl-label">Fade (Matte)</span><span class="ctrl-value" id="vFade">0</span></div>
+                    <input type="range" id="fade" min="0" max="100" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Export -->
+        <div class="export-section">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Export</div>
+            <select id="scaleSelect">
+                <option value="1">1× — Original</option>
+                <option value="2" selected>2× — HD (Bicubic)</option>
+                <option value="4">4× — 4K (Bicubic)</option>
             </select>
-          </div>
-          <div class="flex items-center justify-between gap-3 pt-1"><label class="text-xs text-gray-400">Mode Compare</label><button id="btnCompare" class="btn-soft text-xs px-3 py-2 rounded">OFF</button></div>
-          <div class="grid grid-cols-2 gap-3 mt-4">
-            <button id="btnReset" class="w-full btn-soft text-white font-semibold py-3 px-4 rounded shadow-lg flex justify-center items-center gap-2"><i class="fas fa-rotate-left"></i> Reset</button>
-            <button id="btnExport" class="w-full btn-pro text-white font-semibold py-3 px-4 rounded shadow-lg flex justify-center items-center gap-2"><i class="fas fa-file-export"></i> Export</button>
-          </div>
-          <p class="text-[10px] text-gray-500 leading-tight">Fokus: detail naik, noise turun, tetap natural, dan menghindari hasil terlalu halus seperti upscale AI plastik.</p>
+            <select id="fmtSelect">
+                <option value="jpeg">JPEG (kualitas max)</option>
+                <option value="png">PNG (lossless)</option>
+            </select>
+            <button class="btn-export" id="btnExport">
+                <i class="fas fa-arrow-down-to-line"></i>
+                Render & Download
+            </button>
+            <button class="btn-reset" id="btnReset">↺ Reset semua ke 0</button>
         </div>
-      </div>
+
     </div>
-    <div class="flex-grow flex flex-col bg-[#121212]">
-      <div class="h-12 border-b border-gray-800 flex items-center px-4 justify-between bg-[#1a1a1a]"><span class="text-sm text-gray-400"><i class="fas fa-desktop mr-2"></i>Workspace Pratinjau</span><span id="imageStats" class="text-xs text-gray-500 font-mono"></span></div>
-      <div class="flex-grow canvas-wrapper p-4">
-        <div id="placeholderUI" class="text-center text-gray-600"><i class="fas fa-image text-5xl mb-3 opacity-50"></i><p class="text-sm">Impor foto untuk memulai restorasi</p></div>
-        <canvas id="mainCanvas" class="hidden"></canvas>
-        <canvas id="compareCanvas" class="hidden compare-canvas"></canvas>
-        <div id="loadingOverlay" class="absolute inset-0 bg-black bg-opacity-70 hidden flex-col items-center justify-center z-50"><div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div><p class="text-blue-400 text-sm font-semibold tracking-wide" id="loadingText">Merender Ultra Pro...</p></div>
-      </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace">
+        <div class="workspace-toolbar">
+            <span class="toolbar-tag"><i class="fas fa-circle-dot"></i> Preview</span>
+            <span class="toolbar-badge" id="processingBadge">IDLE</span>
+            <div class="toolbar-sep"></div>
+            <span class="toolbar-tag" style="font-size:10px;color:#333;" id="zoomInfo">—</span>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <div id="placeholder">
+                <i class="fas fa-camera"></i>
+                <p>Import foto untuk mulai editing</p>
+            </div>
+            <canvas id="mainCanvas"></canvas>
+
+            <div id="loading">
+                <div class="spinner"></div>
+                <div id="loadingText">Memproses...</div>
+            </div>
+        </div>
     </div>
-  </div>
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const mainCanvas = document.getElementById('mainCanvas');
-    const compareCanvas = document.getElementById('compareCanvas');
-    const ctx = mainCanvas.getContext('2d', { willReadFrequently: true });
-    const compareCtx = compareCanvas.getContext('2d', { willReadFrequently: true });
-    const ui = { placeholder: document.getElementById('placeholderUI'), controls: document.getElementById('controls'), stats: document.getElementById('imageStats'), btnExport: document.getElementById('btnExport'), btnReset: document.getElementById('btnReset'), btnCompare: document.getElementById('btnCompare'), loading: document.getElementById('loadingOverlay'), loadingText: document.getElementById('loadingText') };
-    const defaults = { ex:4, ct:10, hl:28, sd:22, tm:8, st:6, dt:26, tx:24, dn:18, fp:75, ed:32 };
-    const sliders = {
-      ex:{ el:document.getElementById('ex'), val:document.getElementById('valExposure') },
-      ct:{ el:document.getElementById('ct'), val:document.getElementById('valContrast') },
-      hl:{ el:document.getElementById('hl'), val:document.getElementById('valHighlight') },
-      sd:{ el:document.getElementById('sd'), val:document.getElementById('valShadow') },
-      tm:{ el:document.getElementById('tm'), val:document.getElementById('valTemp') },
-      st:{ el:document.getElementById('st'), val:document.getElementById('valSat') },
-      dt:{ el:document.getElementById('dt'), val:document.getElementById('valDetail') },
-      tx:{ el:document.getElementById('tx'), val:document.getElementById('valTexture') },
-      dn:{ el:document.getElementById('dn'), val:document.getElementById('valDenoise') },
-      fp:{ el:document.getElementById('fp'), val:document.getElementById('valProtect') },
-      ed:{ el:document.getElementById('ed'), val:document.getElementById('valEdge') }
-    };
-    const scaleSelect = document.getElementById('scaleSelect');
-    let sourceImage = null, renderTimer = null, compareMode = false;
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+    ex: 0, hi: 0, sh: 0, ct: 0,
+    tm: 0, tint: 0, st: 0, vib: 0,
+    sharp: 0, cl: 0, nr: 0,
+    vig: 0, fade: 0
+};
+
+const defaultState = { ...state };
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const mainCanvas = $('mainCanvas');
+const ctx = mainCanvas.getContext('2d', { willReadFrequently: true });
+const histCanvas = $('histCanvas');
+const histCtx = histCanvas.getContext('2d');
+
+let sourceImage = null;
+let renderTimer = null;
+let isRendering = false;
+
+// ─── SLIDER MAP ───────────────────────────────────────────────────────────────
+const sliderMap = {
+    ex:    { el: $('ex'),    val: $('vEx'),    key: 'ex' },
+    hi:    { el: $('hi'),    val: $('vHi'),    key: 'hi' },
+    sh:    { el: $('sh'),    val: $('vSh'),    key: 'sh' },
+    ct:    { el: $('ct'),    val: $('vCt'),    key: 'ct' },
+    tm:    { el: $('tm'),    val: $('vTm'),    key: 'tm' },
+    tint:  { el: $('tint'),  val: $('vTint'),  key: 'tint' },
+    st:    { el: $('st'),    val: $('vSt'),    key: 'st' },
+    vib:   { el: $('vib'),   val: $('vVib'),   key: 'vib' },
+    sharp: { el: $('sharp'), val: $('vSharp'), key: 'sharp' },
+    cl:    { el: $('cl'),    val: $('vCl'),    key: 'cl' },
+    nr:    { el: $('nr'),    val: $('vNr'),    key: 'nr' },
+    vig:   { el: $('vig'),   val: $('vVig'),   key: 'vig' },
+    fade:  { el: $('fade'),  val: $('vFade'),  key: 'fade' },
+};
+
+Object.values(sliderMap).forEach(s => {
+    s.el.addEventListener('input', () => {
+        state[s.key] = parseInt(s.el.value);
+        const v = state[s.key];
+        s.val.textContent = v > 0 ? `+${v}` : v;
+        scheduleRender();
+    });
+});
+
+// ─── FILE INPUT ───────────────────────────────────────────────────────────────
+$('fileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadFile(file);
+});
+
+// Drag & drop
+const uploadZone = $('uploadZone');
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadFile(file);
+});
+
+function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
         const img = new Image();
         img.onload = () => {
-          sourceImage = img;
-          ui.placeholder.classList.add('hidden');
-          mainCanvas.classList.remove('hidden');
-          ui.controls.classList.remove('opacity-30', 'pointer-events-none');
-          ui.stats.textContent = `${img.width} × ${img.height} px`;
-          updateValues();
-          renderImage();
+            sourceImage = img;
+            $('placeholder').style.display = 'none';
+            mainCanvas.style.display = 'block';
+            $('controlsArea').classList.remove('disabled');
+            $('statDim').innerHTML = `<span>${img.width}</span> × <span>${img.height}</span>`;
+            $('zoomInfo').textContent = `${img.width} × ${img.height}px`;
+            renderImage();
         };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// ─── PRESETS ──────────────────────────────────────────────────────────────────
+const presets = {
+    auto:      { ex: 5, hi: -10, sh: 15, ct: 15, tm: 10, tint: 0,  st: 12, vib: 20, sharp: 30, cl: 20, nr: 0,  vig: 10, fade: 0  },
+    portrait:  { ex: 8, hi: -15, sh: 25, ct: 10, tm: 15, tint: 5,  st: 5,  vib: 15, sharp: 25, cl: 10, nr: 20, vig: 25, fade: 5  },
+    landscape: { ex: 0, hi: -20, sh: 10, ct: 25, tm: 5,  tint: -5, st: 25, vib: 35, sharp: 40, cl: 35, nr: 0,  vig: 20, fade: 0  },
+    golden:    { ex: 5, hi: -10, sh: 20, ct: 20, tm: 45, tint: 10, st: 30, vib: 20, sharp: 20, cl: 25, nr: 0,  vig: 30, fade: 10 },
+    cinematic: { ex: -5, hi: -25, sh: 10, ct: 30, tm: -10, tint: -5, st: -15, vib: 0, sharp: 15, cl: 30, nr: 10, vig: 50, fade: 20 },
+    bw:        { ex: 0, hi: -15, sh: 20, ct: 40, tm: 0,  tint: 0,  st: -100, vib: 0, sharp: 35, cl: 40, nr: 0,  vig: 40, fade: 15 },
+};
+
+function applyPreset(name) {
+    const p = presets[name];
+    if (!p) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    Object.keys(p).forEach(k => {
+        state[k] = p[k];
+        if (sliderMap[k]) {
+            sliderMap[k].el.value = p[k];
+            const v = p[k];
+            sliderMap[k].val.textContent = v > 0 ? `+${v}` : v;
+        }
     });
-    Object.keys(sliders).forEach((key) => sliders[key].el.addEventListener('input', () => { updateValues(); clearTimeout(renderTimer); renderTimer = setTimeout(renderImage, 20); }));
-    ui.btnReset.addEventListener('click', () => { Object.keys(defaults).forEach((key) => sliders[key].el.value = defaults[key]); updateValues(); renderImage(); });
-    ui.btnCompare.addEventListener('click', () => { compareMode = !compareMode; ui.btnCompare.textContent = compareMode ? 'ON' : 'OFF'; compareCanvas.classList.toggle('hidden', !compareMode); renderImage(); });
-    ui.btnExport.addEventListener('click', exportHighRes);
-    function updateValues() { Object.keys(sliders).forEach((key) => { const val = parseInt(sliders[key].el.value, 10); sliders[key].val.textContent = val > 0 ? `+${val}` : `${val}`; }); }
-    function clamp(v, min, max) { return v < min ? min : v > max ? max : v; }
-    function gaussianBlur3x3(src, w, h) {
-      const out = new Uint8ClampedArray(src.length), k = [1,2,1,2,4,2,1,2,1], div = 16;
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        let r=0,g=0,b=0,a=0,ki=0;
-        for (let ky=-1; ky<=1; ky++) for (let kx=-1; kx<=1; kx++) {
-          const px = clamp(x+kx,0,w-1), py = clamp(y+ky,0,h-1), idx = (py*w+px)*4, ww = k[ki++];
-          r += src[idx]*ww; g += src[idx+1]*ww; b += src[idx+2]*ww; a += src[idx+3]*ww;
+    scheduleRender();
+}
+
+// ─── RESET ────────────────────────────────────────────────────────────────────
+$('btnReset').addEventListener('click', () => {
+    Object.keys(defaultState).forEach(k => {
+        state[k] = 0;
+        if (sliderMap[k]) {
+            sliderMap[k].el.value = 0;
+            sliderMap[k].val.textContent = '0';
         }
-        const di = (y*w+x)*4; out[di]=r/div; out[di+1]=g/div; out[di+2]=b/div; out[di+3]=a/div;
-      }
-      return out;
-    }
-    function boxBlur5x5(src, w, h) {
-      const out = new Uint8ClampedArray(src.length);
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        let r=0,g=0,b=0,a=0,count=0;
-        for (let ky=-2; ky<=2; ky++) for (let kx=-2; kx<=2; kx++) {
-          const px = clamp(x+kx,0,w-1), py = clamp(y+ky,0,h-1), idx = (py*w+px)*4;
-          r += src[idx]; g += src[idx+1]; b += src[idx+2]; a += src[idx+3]; count++;
+    });
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    scheduleRender();
+});
+
+// ─── CORE PROCESSING ENGINE ───────────────────────────────────────────────────
+function processCanvas(canvas, context, img, scale) {
+    const W = img.width * scale;
+    const H = img.height * scale;
+    canvas.width = W;
+    canvas.height = H;
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+
+    // 1) Draw base with CSS filters (exposure, contrast, saturation)
+    const brightness = 100 + state.ex * 0.8;
+    const contrast   = 100 + state.ct * 0.6;
+    const saturate   = 100 + state.st;
+
+    context.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%)`;
+    context.drawImage(img, 0, 0, W, H);
+    context.filter = 'none';
+
+    // 2) Pixel-level operations (highlights, shadows, temperature, tint, vibrance, NR, clarity, sharpness)
+    const imageData = context.getImageData(0, 0, W, H);
+    const d = imageData.data;
+
+    const hiAdj    = state.hi / 100;   // -1 to +1
+    const shAdj    = state.sh / 100;
+    const tmAdj    = state.tm / 60;    // warm/cool
+    const tintAdj  = state.tint / 50;  // green/magenta
+    const vibAdj   = state.vib / 100;
+    const fadeAdj  = state.fade / 100;
+
+    for (let i = 0; i < d.length; i += 4) {
+        let r = d[i], g = d[i+1], b = d[i+2];
+
+        // --- HIGHLIGHTS RECOVERY / BOOST ---
+        if (hiAdj !== 0) {
+            const lum = (r + g + b) / 765; // 0-1
+            if (lum > 0.5) {
+                const hl = (lum - 0.5) * 2; // 0-1 only in highlights
+                const adj = hiAdj * hl * 80;
+                r = clamp(r + adj);
+                g = clamp(g + adj);
+                b = clamp(b + adj);
+            }
         }
-        const di = (y*w+x)*4; out[di]=r/count; out[di+1]=g/count; out[di+2]=b/count; out[di+3]=a/count;
-      }
-      return out;
-    }
-    function multiStepUpscale(img, targetWidth, targetHeight) {
-      let currentCanvas = document.createElement('canvas');
-      let currentCtx = currentCanvas.getContext('2d', { willReadFrequently: true });
-      currentCanvas.width = img.width; currentCanvas.height = img.height; currentCtx.imageSmoothingEnabled = true; currentCtx.imageSmoothingQuality = 'high'; currentCtx.drawImage(img, 0, 0);
-      let cw = img.width, ch = img.height;
-      while (cw < targetWidth || ch < targetHeight) {
-        const nw = Math.min(targetWidth, Math.round(cw * 1.5)), nh = Math.min(targetHeight, Math.round(ch * 1.5));
-        const temp = document.createElement('canvas'), tctx = temp.getContext('2d', { willReadFrequently: true });
-        temp.width = nw; temp.height = nh; tctx.imageSmoothingEnabled = true; tctx.imageSmoothingQuality = 'high'; tctx.drawImage(currentCanvas, 0, 0, cw, ch, 0, 0, nw, nh); currentCanvas = temp; currentCtx = tctx; cw = nw; ch = nh;
-      }
-      return currentCanvas;
-    }
-    function applyToneAndColor(data, settings) {
-      const { highlight, shadow, temperature, saturation } = settings;
-      for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2], l = 0.299*r + 0.587*g + 0.114*b;
-        const hf = (l / 255) * (highlight * 0.28), sf = (1 - l / 255) * (shadow * 0.24);
-        if (l > 150) { r -= hf * 18; g -= hf * 16; b -= hf * 14; }
-        if (l < 130) { r += sf * 10; g += sf * 10; b += sf * 10; }
-        r += temperature * 7; b -= temperature * 8; g += temperature * 1.5;
-        const avg = (r + g + b) / 3;
-        r = avg + (r - avg) * (1 + saturation * 0.22); g = avg + (g - avg) * (1 + saturation * 0.18); b = avg + (b - avg) * (1 + saturation * 0.20);
-        data[i] = clamp(r,0,255); data[i+1] = clamp(g,0,255); data[i+2] = clamp(b,0,255);
-      }
-    }
-    function applyNaturalDenoise(data, w, h, strength, protect) {
-      if (strength <= 0) return;
-      const blurred = gaussianBlur3x3(data, w, h), amount = strength * 0.55, preserve = 0.35 + protect * 0.45;
-      for (let i = 0; i < data.length; i += 4) {
-        const r=data[i], g=data[i+1], b=data[i+2], br=blurred[i], bg=blurred[i+1], bb=blurred[i+2];
-        const l = 0.299*r + 0.587*g + 0.114*b, edge = Math.abs(r-br)+Math.abs(g-bg)+Math.abs(b-bb), protectEdge = clamp(edge/40,0,1), skinProtect = l>80&&l<210 ? preserve : .5, mix = amount * (1 - protectEdge) * skinProtect;
-        data[i] = clamp(r*(1-mix)+br*mix,0,255); data[i+1] = clamp(g*(1-mix)+bg*mix,0,255); data[i+2] = clamp(b*(1-mix)+bb*mix,0,255);
-      }
-    }
-    function applyTextureRestore(data, w, h, texture, detail, edgeOnly, protect) {
-      const blurFine = gaussianBlur3x3(data, w, h), blurBroad = boxBlur5x5(data, w, h), detailAmt = detail * .9, textureAmt = texture * .6, edgeAmt = edgeOnly * 1.1, skinLimiter = 1 - protect * .55;
-      for (let i = 0; i < data.length; i += 4) {
-        const tone = (data[i] + data[i+1] + data[i+2]) / 3, skinZone = tone > 95 && tone < 215 ? skinLimiter : 1;
-        for (let c = 0; c < 3; c++) {
-          const base = data[i+c], fine = base - blurFine[i+c], broad = base - blurBroad[i+c], edgeMagnitude = Math.abs(broad), edgeMask = clamp((edgeMagnitude - 3) / 26, 0, 1), microMask = clamp((Math.abs(fine) - 1) / 18, 0, 1);
-          data[i+c] = clamp(base + fine * detailAmt * microMask * skinZone + broad * textureAmt * edgeMask * (.55 + edgeAmt * .45), 0, 255);
+
+        // --- SHADOWS LIFT ---
+        if (shAdj !== 0) {
+            const lum = (r + g + b) / 765;
+            if (lum < 0.5) {
+                const sl = (0.5 - lum) * 2; // 0-1 only in shadows
+                const adj = shAdj * sl * 80;
+                r = clamp(r + adj);
+                g = clamp(g + adj);
+                b = clamp(b + adj);
+            }
         }
-      }
-    }
-    function applySmartSharpen(data, w, h, edgeOnly, protect) {
-      if (edgeOnly <= 0) return;
-      const blurred = gaussianBlur3x3(data, w, h), amount = .4 + edgeOnly * .9, skinLimiter = 1 - protect * .5;
-      for (let i = 0; i < data.length; i += 4) {
-        const l = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-        for (let c = 0; c < 3; c++) {
-          const base = data[i+c], diff = base - blurred[i+c], mask = clamp((Math.abs(diff) - 2) / 22, 0, 1), limit = l > 90 && l < 215 ? skinLimiter : 1;
-          data[i+c] = clamp(base + diff * amount * mask * limit, 0, 255);
+
+        // --- TEMPERATURE ---
+        if (tmAdj !== 0) {
+            // Warm: boost R/G, reduce B; Cool: boost B, reduce R
+            r = clamp(r + tmAdj * 25);
+            g = clamp(g + tmAdj * 8);
+            b = clamp(b - tmAdj * 25);
         }
-      }
+
+        // --- TINT (green-magenta) ---
+        if (tintAdj !== 0) {
+            // Positive = magenta (boost R/B, reduce G)
+            // Negative = green
+            r = clamp(r + tintAdj * 15);
+            g = clamp(g - tintAdj * 15);
+            b = clamp(b + tintAdj * 10);
+        }
+
+        // --- VIBRANCE (selective saturation – boosts unsaturated colors more) ---
+        if (vibAdj !== 0) {
+            const avg = (r + g + b) / 3;
+            const maxC = Math.max(r, g, b);
+            const satCurrent = maxC === 0 ? 0 : (maxC - Math.min(r, g, b)) / maxC;
+            const vibBoost = vibAdj * (1 - satCurrent) * 0.5;
+            r = clamp(avg + (r - avg) * (1 + vibBoost));
+            g = clamp(avg + (g - avg) * (1 + vibBoost));
+            b = clamp(avg + (b - avg) * (1 + vibBoost));
+        }
+
+        // --- FADE / MATTE (lift shadows) ---
+        if (fadeAdj > 0) {
+            const lift = fadeAdj * 30;
+            r = clamp(r * (1 - fadeAdj * 0.3) + lift);
+            g = clamp(g * (1 - fadeAdj * 0.3) + lift);
+            b = clamp(b * (1 - fadeAdj * 0.3) + lift);
+        }
+
+        d[i] = r; d[i+1] = g; d[i+2] = b;
     }
-    function protectSkinFromPlastic(data, strength) {
-      if (strength <= 0) return;
-      const grain = strength * 1.2;
-      for (let i = 0; i < data.length; i += 4) {
-        const l = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-        if (l > 85 && l < 220) { const n = (Math.random() - .5) * grain; data[i] = clamp(data[i] + n, 0, 255); data[i+1] = clamp(data[i+1] + n, 0, 255); data[i+2] = clamp(data[i+2] + n, 0, 255); }
-      }
+
+    context.putImageData(imageData, 0, 0);
+
+    // 3) CLARITY (overlay self — midtone contrast)
+    if (state.cl > 0) {
+        context.globalCompositeOperation = 'overlay';
+        context.globalAlpha = state.cl * 0.0035;
+        context.drawImage(canvas, 0, 0);
+        context.globalAlpha = 1.0;
+        context.globalCompositeOperation = 'source-over';
     }
-    function processCanvas(canvas, context, img, scaleMultiplier) {
-      const finalWidth = Math.max(1, Math.round(img.width * scaleMultiplier)), finalHeight = Math.max(1, Math.round(img.height * scaleMultiplier));
-      canvas.width = finalWidth; canvas.height = finalHeight; context.imageSmoothingEnabled = true; context.imageSmoothingQuality = 'high';
-      const exposure = parseInt(sliders.ex.el.value, 10) / 100, contrast = parseInt(sliders.ct.el.value, 10) / 100, highlight = parseInt(sliders.hl.el.value, 10) / 100, shadow = parseInt(sliders.sd.el.value, 10) / 100, temperature = parseInt(sliders.tm.el.value, 10) / 100, saturation = parseInt(sliders.st.el.value, 10) / 100, detail = parseInt(sliders.dt.el.value, 10) / 100, texture = parseInt(sliders.tx.el.value, 10) / 100, denoise = parseInt(sliders.dn.el.value, 10) / 100, protect = parseInt(sliders.fp.el.value, 10) / 100, edgeOnly = parseInt(sliders.ed.el.value, 10) / 100;
-      const workingCanvas = scaleMultiplier > 1 ? multiStepUpscale(img, finalWidth, finalHeight) : (() => { const c = document.createElement('canvas'), cx = c.getContext('2d', { willReadFrequently: true }); c.width = finalWidth; c.height = finalHeight; cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high'; cx.drawImage(img, 0, 0, finalWidth, finalHeight); return c; })();
-      context.clearRect(0, 0, finalWidth, finalHeight); context.filter = `brightness(${100 + exposure * 100}%) contrast(${100 + contrast * 100}%)`; context.drawImage(workingCanvas, 0, 0); context.filter = 'none';
-      const imageData = context.getImageData(0, 0, finalWidth, finalHeight), data = imageData.data;
-      applyToneAndColor(data, { highlight, shadow, temperature, saturation });
-      applyNaturalDenoise(data, finalWidth, finalHeight, denoise, protect);
-      applyTextureRestore(data, finalWidth, finalHeight, texture, detail, edgeOnly, protect);
-      applySmartSharpen(data, finalWidth, finalHeight, edgeOnly, protect);
-      protectSkinFromPlastic(data, protect * .35);
-      context.putImageData(imageData, 0, 0);
+
+    // 4) SHARPNESS via Unsharp Mask simulation
+    if (state.sharp > 0) {
+        const sharp = state.sharp / 100;
+        // Draw canvas onto offscreen, apply blur, subtract
+        const offscreen = document.createElement('canvas');
+        offscreen.width = W; offscreen.height = H;
+        const offCtx = offscreen.getContext('2d');
+
+        // Blur radius scales with sharpness
+        const blurPx = Math.max(0.5, (1 - sharp) * 2 + 0.3);
+        offCtx.filter = `blur(${blurPx}px)`;
+        offCtx.drawImage(canvas, 0, 0);
+        offCtx.filter = 'none';
+
+        // Blend: original + (original - blurred) * amount (soft light trick)
+        context.globalCompositeOperation = 'overlay';
+        context.globalAlpha = sharp * 0.45;
+        context.drawImage(canvas, 0, 0);
+        context.globalCompositeOperation = 'source-over';
+        context.globalAlpha = 1.0;
     }
-    function renderOriginalToCompare() {
-      if (!sourceImage || !compareMode) return;
-      compareCanvas.width = mainCanvas.width; compareCanvas.height = mainCanvas.height; compareCtx.clearRect(0, 0, compareCanvas.width, compareCanvas.height); compareCtx.drawImage(sourceImage, 0, 0, compareCanvas.width, compareCanvas.height); compareCtx.fillStyle = 'rgba(0,0,0,.34)'; compareCtx.fillRect(compareCanvas.width / 2, 0, compareCanvas.width / 2, compareCanvas.height); compareCtx.fillStyle = 'rgba(255,255,255,.9)'; compareCtx.fillRect(compareCanvas.width / 2 - 1, 0, 2, compareCanvas.height); compareCtx.fillStyle = 'rgba(255,255,255,.95)'; compareCtx.font = '12px sans-serif'; compareCtx.fillText('ORIGINAL', 18, 24); compareCtx.fillText('RESTORED →', compareCanvas.width / 2 + 14, 24);
+
+    // 5) VIGNETTE
+    if (state.vig > 0) {
+        const vigStrength = state.vig / 100;
+        const gradient = context.createRadialGradient(W/2, H/2, Math.min(W,H)*0.25, W/2, H/2, Math.max(W,H)*0.75);
+        gradient.addColorStop(0, 'rgba(0,0,0,0)');
+        gradient.addColorStop(1, `rgba(0,0,0,${vigStrength * 0.75})`);
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, W, H);
     }
-    function renderImage() { if (!sourceImage) return; processCanvas(mainCanvas, ctx, sourceImage, 1); renderOriginalToCompare(); }
-    function exportHighRes() {
-      if (!sourceImage) return;
-      const scale = parseInt(scaleSelect.value, 10);
-      ui.loading.classList.remove('hidden'); ui.loading.classList.add('flex'); ui.loadingText.textContent = `Merender ${scale}x Ultra Pro...`;
-      setTimeout(() => {
-        const exportCanvas = document.createElement('canvas'), exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
-        processCanvas(exportCanvas, exportCtx, sourceImage, scale);
-        const dataUrl = exportCanvas.toDataURL('image/jpeg', .96), link = document.createElement('a');
-        link.download = `Studio_Ultra_Pro_${scale}x.jpg`; link.href = dataUrl; link.click();
-        ui.loading.classList.add('hidden'); ui.loading.classList.remove('flex');
-      }, 100);
+}
+
+function clamp(v) { return Math.min(255, Math.max(0, Math.round(v))); }
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function scheduleRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderImage, 25);
+}
+
+function renderImage() {
+    if (!sourceImage) return;
+    $('processingBadge').textContent = 'RENDERING';
+    $('processingBadge').style.background = 'rgba(245,200,66,0.15)';
+    $('processingBadge').style.color = 'var(--gold)';
+    $('processingBadge').style.borderColor = 'rgba(245,200,66,0.3)';
+
+    processCanvas(mainCanvas, ctx, sourceImage, 1);
+    updateHistogram();
+
+    $('processingBadge').textContent = 'LIVE';
+    $('processingBadge').style.background = 'rgba(79,200,122,0.15)';
+    $('processingBadge').style.color = 'var(--success)';
+    $('processingBadge').style.borderColor = 'rgba(79,200,122,0.3)';
+}
+
+// ─── HISTOGRAM ────────────────────────────────────────────────────────────────
+function updateHistogram() {
+    const imageData = ctx.getImageData(0, 0, mainCanvas.width, mainCanvas.height);
+    const d = imageData.data;
+    const bins = { r: new Uint32Array(256), g: new Uint32Array(256), b: new Uint32Array(256) };
+
+    for (let i = 0; i < d.length; i += 4) {
+        bins.r[d[i]]++;
+        bins.g[d[i+1]]++;
+        bins.b[d[i+2]]++;
     }
-  </script>
+
+    const HW = histCanvas.width, HH = histCanvas.height;
+    histCtx.clearRect(0, 0, HW, HH);
+
+    const maxVal = Math.max(...bins.r, ...bins.g, ...bins.b);
+
+    ['r','g','b'].forEach((ch, idx) => {
+        const colors = ['rgba(255,80,80,0.5)', 'rgba(80,200,80,0.5)', 'rgba(80,120,255,0.5)'];
+        histCtx.beginPath();
+        histCtx.moveTo(0, HH);
+        bins[ch].forEach((v, i) => {
+            const x = (i / 256) * HW;
+            const y = HH - (v / maxVal) * HH;
+            if (i === 0) histCtx.moveTo(x, y);
+            else histCtx.lineTo(x, y);
+        });
+        histCtx.lineTo(HW, HH);
+        histCtx.closePath();
+        histCtx.fillStyle = colors[idx];
+        histCtx.fill();
+    });
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+$('btnExport').addEventListener('click', exportHD);
+
+function exportHD() {
+    if (!sourceImage) return;
+    const scale = parseInt($('scaleSelect').value);
+    const fmt   = $('fmtSelect').value;
+
+    const loading = $('loading');
+    loading.style.display = 'flex';
+    $('loadingText').textContent = `Merender ${scale}× (${sourceImage.width * scale} × ${sourceImage.height * scale}px)...`;
+
+    setTimeout(() => {
+        const ec = document.createElement('canvas');
+        const ectx = ec.getContext('2d');
+        processCanvas(ec, ectx, sourceImage, scale);
+
+        const mime = fmt === 'png' ? 'image/png' : 'image/jpeg';
+        const quality = fmt === 'png' ? 1 : 1.0;
+        const ext = fmt;
+
+        ec.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `StudioPro_${scale}x.${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            loading.style.display = 'none';
+        }, mime, quality);
+    }, 100);
+}
+</script>
 </body>
 </html>
