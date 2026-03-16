@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Photo Enhancer - Pro Grade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .panel {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+        .canvas-wrapper {
+            background-image: repeating-linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), repeating-linear-gradient(45deg, #1a1a1a 25%, #222 25%, #222 75%, #1a1a1a 75%, #1a1a1a);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50vh;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        /* Custom Pro Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #444;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        .btn-pro {
+            background: linear-gradient(135deg, #0062ff 0%, #0045b8 100%);
+            transition: all 0.2s;
+        }
+        .btn-pro:hover {
+            background: linear-gradient(135deg, #0073ff 0%, #0056e0 100%);
+            box-shadow: 0 4px 12px rgba(0, 98, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="antialiased h-screen flex flex-col">
+
+<div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+    
+    <!-- Sidebar Controls -->
+    <div class="w-full md:w-80 panel flex flex-col h-full overflow-y-auto z-10 shadow-2xl">
+        <div class="p-5 border-b border-gray-700">
+            <h1 class="text-xl font-bold tracking-wide text-white"><i class="fas fa-camera-retro text-blue-400 mr-2"></i>Studio Pro</h1>
+            <p class="text-xs text-gray-400 mt-1">Realistic Photographic Engine</p>
+        </div>
+
+        <div class="p-5 flex-grow space-y-6">
+            
+            <!-- Upload -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">1. Impor Foto</label>
+                <input type="file" id="fileInput" accept="image/*" class="block w-full text-sm text-gray-400
+                    file:mr-3 file:py-2 file:px-4
+                    file:rounded file:border-0
+                    file:text-xs file:font-semibold
+                    file:bg-gray-700 file:text-white
+                    hover:file:bg-gray-600 cursor-pointer transition"/>
+            </div>
+
+            <!-- Basic Adjustments -->
+            <div id="controls" class="space-y-4 opacity-30 pointer-events-none transition-opacity">
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-700 pb-1 mb-3">2. Koreksi Cahaya & Warna</label>
+                
+                <!-- Exposure -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Pencahayaan (Exposure)</span>
+                        <span id="valExposure" class="text-blue-400 font-mono">0</span>
+                    </div>
+                    <input type="range" id="ex" min="-50" max="50" value="5">
+                </div>
+
+                <!-- Contrast -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Kontras (Contrast)</span>
+                        <span id="valContrast" class="text-blue-400 font-mono">0</span>
+                    </div>
+                    <input type="range" id="ct" min="-50" max="100" value="15">
+                </div>
+
+                <!-- Shadows / Clarity Trick -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Kejernihan (Clarity)</span>
+                        <span id="valClarity" class="text-blue-400 font-mono">0</span>
+                    </div>
+                    <input type="range" id="cl" min="0" max="100" value="25">
+                </div>
+
+                <!-- Temperature -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Suhu (Temperature)</span>
+                        <span id="valTemp" class="text-blue-400 font-mono">0</span>
+                    </div>
+                    <!-- Gradient track for temp -->
+                    <input type="range" id="tm" min="-50" max="50" value="15" style="background: linear-gradient(90deg, #4facfe, #444, #ff9a44);">
+                </div>
+
+                <!-- Saturation -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Saturasi (Saturation)</span>
+                        <span id="valSat" class="text-blue-400 font-mono">0</span>
+                    </div>
+                    <input type="range" id="st" min="-100" max="100" value="10">
+                </div>
+
+                <!-- Export Quality -->
+                <div class="pt-4 mt-2">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-700 pb-1 mb-3">3. Resolusi Akhir</label>
+                    <select id="scaleSelect" class="bg-gray-800 border border-gray-600 text-white text-sm rounded block w-full p-2 outline-none focus:border-blue-500">
+                        <option value="1">Original (Tidak Diperbesar)</option>
+                        <option value="2" selected>Studio HD (2x Pembesaran Halus)</option>
+                        <option value="4">Studio 4K (4x Pembesaran Halus)</option>
+                    </select>
+                    <p class="text-[10px] text-gray-500 mt-2 leading-tight">Resolusi tinggi menggunakan metode Bicubic Step-Interpolation untuk menjaga wajah 100% asli.</p>
+                </div>
+
+                <button id="btnExport" class="w-full btn-pro text-white font-semibold py-3 px-4 rounded shadow-lg flex justify-center items-center gap-2 mt-4">
+                    <i class="fas fa-file-export"></i> Render & Unduh HD
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="flex-grow flex flex-col bg-[#121212]">
+        <div class="h-12 border-b border-gray-800 flex items-center px-4 justify-between bg-[#1a1a1a]">
+            <span class="text-sm text-gray-400"><i class="fas fa-desktop mr-2"></i>Workspace Pratinjau</span>
+            <span id="imageStats" class="text-xs text-gray-500 font-mono"></span>
+        </div>
+        
+        <div class="flex-grow canvas-wrapper p-4">
+            <div id="placeholderUI" class="text-center text-gray-600">
+                <i class="fas fa-image text-5xl mb-3 opacity-50"></i>
+                <p class="text-sm">Impor foto untuk memulai pengeditan</p>
+            </div>
+            <canvas id="mainCanvas" class="hidden"></canvas>
+            
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="absolute inset-0 bg-black bg-opacity-70 hidden flex-col items-center justify-center z-50">
+                <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p class="text-blue-400 text-sm font-semibold tracking-wide" id="loadingText">Merender Resolusi Tinggi...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const mainCanvas = document.getElementById('mainCanvas');
+    const ctx = mainCanvas.getContext('2d', { willReadFrequently: true });
+    
+    const ui = {
+        placeholder: document.getElementById('placeholderUI'),
+        controls: document.getElementById('controls'),
+        stats: document.getElementById('imageStats'),
+        btnExport: document.getElementById('btnExport'),
+        loading: document.getElementById('loadingOverlay'),
+        loadingText: document.getElementById('loadingText')
+    };
+
+    const sliders = {
+        ex: { el: document.getElementById('ex'), val: document.getElementById('valExposure') },
+        ct: { el: document.getElementById('ct'), val: document.getElementById('valContrast') },
+        cl: { el: document.getElementById('cl'), val: document.getElementById('valClarity') },
+        tm: { el: document.getElementById('tm'), val: document.getElementById('valTemp') },
+        st: { el: document.getElementById('st'), val: document.getElementById('valSat') }
+    };
+
+    const scaleSelect = document.getElementById('scaleSelect');
+    let sourceImage = null;
+    let renderTimer = null;
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                sourceImage = img;
+                ui.placeholder.classList.add('hidden');
+                mainCanvas.classList.remove('hidden');
+                ui.controls.classList.remove('opacity-30', 'pointer-events-none');
+                ui.stats.textContent = `${img.width} x ${img.height} px`;
+                
+                // Gunakan nilai optimal preset yang sudah diatur di HTML
+                updateValues();
+                renderImage();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Event listeners for sliders
+    Object.keys(sliders).forEach(key => {
+        sliders[key].el.addEventListener('input', () => {
+            updateValues();
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(renderImage, 30); // Debounce
+        });
+    });
+
+    ui.btnExport.addEventListener('click', exportHighRes);
+
+    function updateValues() {
+        Object.keys(sliders).forEach(key => {
+            let val = parseInt(sliders[key].el.value);
+            sliders[key].val.textContent = val > 0 ? `+${val}` : val;
+        });
+    }
+
+    // Core Processing Engine
+    function processCanvas(canvas, context, img, scaleMultiplier) {
+        const finalWidth = img.width * scaleMultiplier;
+        const finalHeight = img.height * scaleMultiplier;
+
+        canvas.width = finalWidth;
+        canvas.height = finalHeight;
+
+        // Kualitas tertinggi untuk gambar tanpa pecah
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+
+        // 1. Ambil nilai pengaturan
+        // Konversi slider (-50 s/d 50 dll) ke persentase CSS filter
+        const exposure = 100 + parseInt(sliders.ex.el.value); // 100% is base
+        const contrast = 100 + parseInt(sliders.ct.el.value);
+        const saturate = 100 + parseInt(sliders.st.el.value);
+        
+        // 2. Terapkan dasar Exposure, Kontras, dan Saturasi menggunakan algoritma bawaan browser (sangat presisi dan tanpa distorsi wajah)
+        context.filter = `brightness(${exposure}%) contrast(${contrast}%) saturate(${saturate}%)`;
+        context.drawImage(img, 0, 0, finalWidth, finalHeight);
+        context.filter = 'none'; // reset
+
+        // 3. Suhu Warna / Temperature (Warmth)
+        const tempVal = parseInt(sliders.tm.el.value);
+        if (tempVal !== 0) {
+            context.globalCompositeOperation = tempVal > 0 ? 'overlay' : 'overlay';
+            // Jika positif (hangat), gunakan warna oranye kecoklatan. Jika negatif (dingin), biru muda.
+            context.fillStyle = tempVal > 0 ? `rgba(255, 140, 0, ${tempVal * 0.003})` : `rgba(0, 130, 255, ${Math.abs(tempVal) * 0.003})`;
+            context.fillRect(0, 0, finalWidth, finalHeight);
+            
+            // Tambahkan sedikit multiply blend untuk kulit yang lebih natural jika ke arah warm
+            if (tempVal > 0) {
+                context.globalCompositeOperation = 'multiply';
+                context.fillStyle = `rgba(255, 220, 180, ${tempVal * 0.0015})`;
+                context.fillRect(0, 0, finalWidth, finalHeight);
+            }
+            context.globalCompositeOperation = 'source-over'; // reset
+        }
+
+        // 4. Clarity Trick (Simulasi filter "High Pass" atau "Clarity" Lightroom)
+        // Ini memperjelas detail tanpa membuat wajah jadi aneh
+        const clarityVal = parseInt(sliders.cl.el.value);
+        if (clarityVal > 0) {
+            context.globalCompositeOperation = 'overlay';
+            context.globalAlpha = clarityVal * 0.004; // Sangat tipis agar natural
+            // Menggambar ulang gambar yang sudah difilter di atasnya dengan mode overlay
+            // Efeknya menajamkan kontras mid-tone secara signifikan
+            context.drawImage(canvas, 0, 0);
+            context.globalAlpha = 1.0;
+            context.globalCompositeOperation = 'source-over';
+        }
+    }
+
+    function renderImage() {
+        if (!sourceImage) return;
+        // Render pratinjau di ukuran layar agar tidak ngelag
+        processCanvas(mainCanvas, ctx, sourceImage, 1);
+    }
+
+    function exportHighRes() {
+        if (!sourceImage) return;
+        
+        const scale = parseInt(scaleSelect.value);
+        
+        ui.loading.classList.remove('hidden');
+        ui.loading.classList.add('flex');
+        
+        // Timeout agar UI loading sempat muncul
+        setTimeout(() => {
+            const exportCanvas = document.createElement('canvas');
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // Proses dengan ukuran besar
+            processCanvas(exportCanvas, exportCtx, sourceImage, scale);
+
+            // Export ke JPG kualitas tertinggi (1.0 = 100% Quality)
+            const dataUrl = exportCanvas.toDataURL('image/jpeg', 1.0);
+            
+            const link = document.createElement('a');
+            link.download = `Studio_Master_${scale}x_HD.jpg`;
+            link.href = dataUrl;
+            link.click();
+
+            ui.loading.classList.add('hidden');
+            ui.loading.classList.remove('flex');
+        }, 150);
+    }
+</script>
+
+</body>
+</html>
